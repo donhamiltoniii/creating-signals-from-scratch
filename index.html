@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite App</title>
+  </head>
+  <body>
+    <signal-example></signal-example>
+    <script type="module" src="/main.js"></script>
+    <script type="module">
+      import { createEffect, createSignal } from "./signal.js";
+
+      // Create Reactive State
+      const [state, setState] = createSignal({
+        buttonText: "Increment Count",
+        count: 0,
+      });
+      const [name, setName] = createSignal("Dondon");
+
+      // Define Custom Element
+      customElements.define(
+        "signal-example",
+        class extends HTMLElement {
+          // Initialize
+          constructor() {
+            // Remember to call super or 'this' will not work
+            // This means your calls to internal functions won't fire
+            // Ask me how I know...
+            super();
+
+            // Initial Render
+            this.render();
+
+            // Adds re-render logic based on state
+            // I wonder if I can remove this with custom events
+            createEffect(() => {
+              this.render();
+            });
+
+            // Internal Event Listeners
+            this.addEventListener("click", this);
+            this.addEventListener("submit", this);
+          }
+
+          /**
+           * will handle all incoming events
+           * @param {Event} event event object
+           */
+          handleEvent(event) {
+            if (event.target.tagName === "BUTTON") {
+              setState({ ...state(), count: state().count + 1 });
+            }
+
+            if (event.type === "submit") {
+              event.preventDefault();
+              const data = new FormData(event.target);
+              setName(data.get("title"));
+            }
+          }
+
+          /**
+           * Handles rendering of the component
+           */
+          render() {
+            this.innerHTML = this.template({ ...state(), title: name() });
+          }
+
+          /**
+           * Encapsulates the template logic
+           * @param {Object} props all properties passed to template
+           * @param {string} props.buttonText button text content
+           * @param {number} props.count obligatory count test prop for button clicking
+           * @param {string} props.title title text
+           * @return {string} HTML string template literal
+           */
+          template({ buttonText, count, title }) {
+            return `
+              <div class="poopoopeepee">
+                <h2>${title}</h2>
+                <p>Count: ${count}</p>
+                <button>${buttonText}</button>
+                <form>
+                  <label>Update Name: <input name="title" /></label>
+                </form>
+              </div>
+            `;
+          }
+        }
+      );
+    </script>
+  </body>
+</html>
